@@ -1,33 +1,49 @@
-#ifndef HOLBERTON_H
-#define HOLBERTON_H
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include "holberton.h"
 
 /**
- * struct fmt - function to check for formats
- * @type: The format to print
- * @f: The print function to use
+ * _printf - prints anything
+ * @format: the format string
+ *
+ * Return: number of bytes printed
  */
-typedef struct fmt
+int _printf(const char *format, ...)
 {
-  char *type;
-  int (*f)();
-} fmt_t;
+	int sum = 0;
+	va_list ap;
+	char *p, *start;
+	params_t params = PARAMS_INIT;
 
-int _printf(const char *format, ...);
-int print_op(const char *format, fmt_t *print_arr, va_list list);
-int ch(va_list character);
-int str(va_list string);
-int _int(va_list integ);
-int _ui(va_list unsign);
-int _oct(va_list octo);
-int _rot13(va_list rot);
-int _hex_str(unsigned int n, unsigned int hex, char alpha);
-int _hex_l(va_list hexa);
-int _hex_u(va_list hexa);
-int _strlen(char *s);
-int _bin(va_list bin);
-int _putchar(char c);
-#endif
+	va_start(ap, format);
+
+	if (!format || (format[0] == '%' && !format[1]))
+		return (-1);
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
+		return (-1);
+	for (p = (char *)format; *p; p++)
+	{
+		init_params(&params, ap);
+		if (*p != '%')
+		{
+			sum += _putchar(*p);
+			continue;
+		}
+		start = p;
+		p++;
+		while (get_flag(p, &params)) /* while char at p is flag char */
+		{
+			p++; /* next char */
+		}
+		p = get_width(p, &params, ap);
+		p = get_precision(p, &params, ap);
+		if (get_modifier(p, &params))
+			p++;
+		if (!get_specifier(p))
+			sum += print_from_to(start, p,
+				params.l_modifier || params.h_modifier ? p - 1 : 0);
+		else
+			sum += get_print_func(p, ap, &params);
+	}
+	_putchar(BUF_FLUSH);
+	va_end(ap);
+	return (sum);
+}
